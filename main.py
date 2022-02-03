@@ -7,7 +7,7 @@ import db
 import telebot
 from telebot import types
 
-from settings import TOKEN, MAX_PINS
+from settings import TOKEN, MAX_PINS, TEACHER
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -103,7 +103,7 @@ def send_message(pin, text, _callback=None, markup=None):
 
 
 def update_event(pin, timeout, stage):
-    """Добавляем время отправли след сообщения (текст от этапа)"""
+    """Добавляем время отправления след сообщения (текст от этапа)"""
     pin['next_time_to_kick'] = datetime.datetime.today() + timeout
     pin['current_stage'] = stage
     db.pin_update(pin)
@@ -325,10 +325,8 @@ def gen_kb_time():
 
 def reset_scheduled_event_without_save(pin: dict):
     """Планирование ближайшей даты и сброс этапа"""
-    print('reset_scheduled_event')
+    # print('reset_scheduled_event')
     now = datetime.datetime.today()
-    h = now.hour
-    m = now.minute
     d = datetime.datetime(now.year,
                           now.month,
                           now.day,
@@ -336,27 +334,23 @@ def reset_scheduled_event_without_save(pin: dict):
                           minute=pin['time'].minute)
     timeout = 0
     while True:
-        # Если сегодня и время больше, то ок. Иначе время 00 + след сутки
-        # нумерация с 1 т.к. умножаем
+        # print(now)
+        # print(d)
         if (d.weekday() + 1) in (pin['mon'] * 1,
                                  pin['tue'] * 2,
                                  pin['wed'] * 3,
                                  pin['tru'] * 4,
                                  pin['fri'] * 5,
                                  pin['sat'] * 6,
-                                 pin['sun'] * 7) and (
-                h <= pin['time'].hour and
-                (h <= pin['time'].hour and m < pin['time'].minute)
-        ):
+                                 pin['sun'] * 7) and (now <= d):
             nearest = d
             break
         else:
-            h = m = 0
-            d += datetime.timedelta(1)
+            d += datetime.timedelta(days=1)
 
         timeout += 1
-        # print("reset False")
         if timeout > 50:
+            print("reset False timeout")
             return False
 
     pin['next_time_to_kick'] = nearest
@@ -422,6 +416,9 @@ def f_get_title_to_del(message):
         elif title == "+":
             raise Exception(f"Текущее ограничение сервера {MAX_PINS} напоминалок")
         elif db.pin_delete(own, title):
+            name = f"{message.from_user.first_name} {message.from_user.last_name}"
+            nick = f"{message.from_user.username}"
+            snitch_pin_delete(title, name, nick)
             bot.send_message(own, 'Удалено\n\nВведите /start для продолжения')
         else:
             bot.send_message(own, '"Напоминание" не найдено\n\nВведите /start для продолжения')
@@ -512,6 +509,18 @@ def f_get_time(message, pin):
         print(e)
         bot.send_message(own,
                          f'{e}\noooops, попробуйте еще раз..\n\nВведите /start для продолжения')
+
+
+def snitch_pin_delete(title, name, nick):
+    bot.send_message(TEACHER, f'Псс.. Парень, тут один перец отписался от нашей напоминалки\n\n{title}\n\n'
+                              f'Это {name}\n\n'
+                              f'Найти его можно тут @{nick}')
+
+
+def snitch_pin_ignore(pin, name, nick):
+    bot.send_message(TEACHER, f'Псс.. Парень, тут один перец упорно сопротивляется. \n\nДавай напомним ему \n\n{pin["title"]}\n\n'
+                              f'Это {name}\n\n'
+                              f'Найти его можно тут @{nick}')
 
 
 if __name__ == "__main__":

@@ -6,49 +6,6 @@ import datetime
 from settings import dbname, user, password, host
 
 
-def create_table():
-    try:
-        with closing(psycopg2.connect(dbname=dbname, user=user, password=password, host=host)) as conn:
-            with conn.cursor(cursor_factory=DictCursor) as cursor:
-                sql = ("-- auto-generated definition\n"
-                       "create table pins\n"
-                       "(\n"
-                       "    id                serial    not null\n"
-                       "        constraint pins_pk\n"
-                       "            primary key,\n"
-                       "    own               text      not null,\n"
-                       "    datetime          timestamp not null,\n"
-                       "    active            boolean   not null,\n"
-                       "    mon               boolean   not null,\n"
-                       "    tue               boolean   not null,\n"
-                       "    wed               boolean   not null,\n"
-                       "    tru               boolean   not null,\n"
-                       "    fri               boolean   not null,\n"
-                       "    sat               boolean   not null,\n"
-                       "    sun               boolean   not null,\n"
-                       "    time              time      not null,\n"
-                       "    title             text      not null,\n"
-                       "    len               time      not null,\n"
-                       "    next_time_to_kick timestamp not null,\n"
-                       "    current_stage     integer   not null,\n"
-                       "    reset_counter     integer   not null,\n"
-                       "    cancel_counter    integer   not null"
-                       ");\n"
-                       "\n"
-                       "alter table pins\n"
-                       "    owner to postgres;\n"
-                       "\n"
-                       "create unique index pins_id_uindex\n"
-                       "    on pins (id);")
-
-                cursor.execute(sql)
-                conn.commit()
-        return True
-    except Exception as e:
-        print(e)
-        return False
-
-
 pin_template = {
     "own": "",
     "datetime": datetime.datetime(1970, 1, 1, 0, 0, 1),

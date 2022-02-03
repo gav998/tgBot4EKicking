@@ -6,3 +6,5 @@ password = 'ПАРОЛЬ'
 host = 'localhost'
 
 MAX_PINS = 5
+
+TEACHER = "ТУТ ВАШ ТГ ID"
